@@ -37,7 +37,7 @@ add_action('admin_menu', 'cmp_add_reservas_menu');
 // Function to display the "Winners" page content
 function cmp_winners_page() {
     ?>
-    
+    <h1>teste</h1>
     <?php
 }
 function cmp_ver_recompensas() {
