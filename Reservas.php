@@ -7,9 +7,9 @@
  * Text Domain: reservas
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly.
-}
+// if ( ! defined( 'ABSPATH' ) ) {
+//     exit; // Exit if accessed directly.
+// }
 
 // function register_oembed_widget( $widgets_manager ) {
 
