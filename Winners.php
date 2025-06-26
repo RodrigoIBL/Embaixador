@@ -32,18 +32,28 @@ function cmp_reservas_page()
     $body = wp_remote_retrieve_body($response);
     $dados = json_decode($body, true);
 
-
     echo '<div class="wrap"><h1>Reservas</h1>';
 
-    if (!empty($dados) && is_array($dados)) {
+    echo '<pre><strong>DEBUG - Dados recebidos da API:</strong>' . print_r($dados, true) . '</pre>';
+
+    // Tenta pegar o array de reservas
+    if (isset($dados['data']) && is_array($dados['data'])) {
+        $reservas = $dados['data'];
+    } elseif (is_array($dados)) {
+        $reservas = $dados;
+    } else {
+        $reservas = [];
+    }
+
+    if (!empty($reservas)) {
         echo '<table class="widefat fixed striped">';
         echo '<thead><tr><th>Nome</th><th>Check-In</th><th>Check-Out</th><th>Provider</th></tr></thead>';
         echo '<tbody>';
 
-        foreach ($dados as $reserva) {
-            $nome = esc_html(($reserva['firstname'] ?? '') . ' ' . ($reserva['lastname'] ?? ''));
-            $checkin = !empty($reserva['arrival']) ? date('Y-m-d', $reserva['arrival']) : '-';
-            $checkout = !empty($reserva['departure']) ? date('Y-m-d', $reserva['departure']) : '-';
+        foreach ($reservas as $reserva) {
+            $nome = esc_html(trim(($reserva['firstname'] ?? '') . ' ' . ($reserva['lastname'] ?? '')));
+            $checkin = !empty($reserva['arrival']) ? date('Y-m-d', (int)$reserva['arrival']) : '-';
+            $checkout = !empty($reserva['departure']) ? date('Y-m-d', (int)$reserva['departure']) : '-';
             $provider = esc_html($reserva['provider'] ?? '-');
 
             echo '<tr>';
