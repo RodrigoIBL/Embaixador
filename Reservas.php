@@ -37,7 +37,7 @@ function cmp_reservas_page()
     $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
     $response = wp_remote_get($api_url);
 
-    echo '<div class="wrap"><h1>Reservas</h1>';
+    echo '<div class="wrap"><h1>Reservas 1</h1>';
 
     if (is_wp_error($response)) {
         echo '<div class="notice notice-error"><p>Erro ao aceder à API: ' . esc_html($response->get_error_message()) . '</p></div>';
