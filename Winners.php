@@ -28,7 +28,7 @@ add_action('admin_menu', 'cmp_add_reservas_menu');
 // Function to display the "Winners" page content
 function cmp_reservas_page() {
     ?>
-    <h1>teste</h1>
+    <h1>Reservas</h1>
     <table>
   <tr>
     <th>Apartamento</th>
@@ -69,7 +69,7 @@ function cmp_reservas_page() {
   </tr>
 </table>
 
-
+<button onclick="callAPI()">Teste</button>
     <?php
 }
 
