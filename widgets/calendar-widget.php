@@ -22,7 +22,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @return string Widget name.
 	 */
 	public function get_name(): string {
-		return 'calendar';
+		return 'oembed';
 	}
 
 	/**
@@ -35,7 +35,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @return string Widget title.
 	 */
 	public function get_title(): string {
-		return esc_html__( 'Calendar', 'elementor-calendar-widget' );
+		return esc_html__( 'oEmbed', 'elementor-oembed-widget' );
 	}
 
 	/**
@@ -74,7 +74,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @return array Widget keywords.
 	 */
 	public function get_keywords(): array {
-		return [ 'calendar', 'url', 'link' ];
+		return [ 'oembed', 'url', 'link' ];
 	}
 
 	/**
