@@ -22,7 +22,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @return string Widget name.
 	 */
 	public function get_name(): string {
-		return 'oembed';
+		return 'Calendar';
 	}
 
 	/**
@@ -48,7 +48,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @return string Widget icon.
 	 */
 	public function get_icon(): string {
-		return 'eicon-code';
+		return 'eicon-calendar';
 	}
 
 	/**
