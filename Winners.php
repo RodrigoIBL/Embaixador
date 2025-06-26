@@ -1,33 +1,20 @@
 <?php
 /**
  * Plugin Name: Reservas
- * Description: Plugin de reservas Embaixador
+ * Description: Plugin de reservas Embaixador com widget Elementor
  * Author: IBloom
- * Version: 0.2
+ * Version: 0.3
  * Text Domain: reservas
  */
 
- if ( ! defined(constant_name:'ABSPATH')) {
+// Evitar acesso direto
+if (!defined('ABSPATH')) {
     exit;
- }
+}
 
- add_action('plugins_loaded', 'cew_init');
-
- function cew_init() {
-  if (!did_action('elementor/loaded')) {
-    add_action ('admin_notices', function() {
-      echo '<div class"notice notice-error"><p>Elementor must be instaled and active.</p></div>';
-    });
-    return;
-  }
- }
-
- function register_hello_widget($widgets_manager): void {
-  require_once(__DIR__ . '/widgets/hello-widget.php');
-  $widgets_manager->register(new \Hello_Widget());
- }
- add_action('elementor/widgets/register', 'register_hello_widget');
-
+// -------------------
+// 1. Menu admin "Reservas" com tabela das reservas
+// -------------------
 add_action('admin_menu', function () {
     add_menu_page(
         'Reservas',
@@ -114,3 +101,29 @@ function cmp_reservas_page()
 
     echo '</div>';
 }
+
+// -------------------
+// 2. Registar e carregar o widget Elementor
+// -------------------
+
+// Registar widget no Elementor
+add_action('elementor/widgets/register', function($widgets_manager) {
+    require_once __DIR__ . '/widgets/reservas-widget.php';
+    $widgets_manager->register(new \Reservas_Widget());
+});
+
+// Assegurar que o Elementor está ativo antes de registar o widget
+add_action('plugins_loaded', function() {
+    if (defined('ELEMENTOR_PATH') && class_exists('\Elementor\Widget_Base')) {
+        // Aqui já regista o widget no hook acima
+    }
+});
+
+// -------------------
+// 3. Código do widget Elementor (guardar em /widgets/reservas-widget.php)
+// -------------------
+
+/*
+Cria o ficheiro widgets/reservas-widget.php com este conteúdo:
+*/
+
