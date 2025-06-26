@@ -32,10 +32,6 @@ function cmp_reservas_page()
     $body = wp_remote_retrieve_body($response);
     $dados = json_decode($body, true);
 
-    echo '<pre>';
-  print_r($dados);
-  echo '</pre>';
-
 
     echo '<div class="wrap"><h1>Reservas</h1>';
 
