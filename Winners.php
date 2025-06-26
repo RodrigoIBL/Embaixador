@@ -35,10 +35,14 @@ function cmp_reservas_page()
     echo '<p><strong>Status HTTP da resposta:</strong> ' . esc_html($status_code) . '</p>';
 
     $body = wp_remote_retrieve_body($response);
-    echo '<p><strong>Conteúdo bruto da resposta da API:</strong></p>';
-    echo '<pre>' . esc_html($body) . '</pre>';
 
-    $dados = json_decode($body, true);
+    // Forçar a codificação UTF-8
+    $body_utf8 = mb_convert_encoding($body, 'UTF-8', 'UTF-8');
+
+    echo '<p><strong>Conteúdo bruto da resposta da API (forçado UTF-8):</strong></p>';
+    echo '<pre>' . esc_html($body_utf8) . '</pre>';
+
+    $dados = json_decode($body_utf8, true);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
         echo '<p><strong>Erro ao decodificar JSON:</strong> ' . esc_html(json_last_error_msg()) . '</p>';
@@ -48,5 +52,5 @@ function cmp_reservas_page()
     echo '<p><strong>Array decodificado do JSON:</strong></p>';
     echo '<pre>' . print_r($dados, true) . '</pre>';
 
-    // A seguir podes fazer o resto do código para mostrar a tabela, quando os dados estiverem OK
+    // Aqui podes continuar a mostrar a tabela como antes
 }
