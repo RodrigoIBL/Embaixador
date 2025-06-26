@@ -24,45 +24,22 @@ function cmp_reservas_page()
     $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
     $response = wp_remote_get($api_url);
 
-    $dados = [];
-
-    if (!is_wp_error($response)) {
-        $body = wp_remote_retrieve_body($response);
-        $dados = json_decode($body, true);
+    if (is_wp_error($response)) {
+        echo '<div class="notice notice-error"><p>Erro ao aceder à API: ' . esc_html($response->get_error_message()) . '</p></div>';
+        return;
     }
 
-    ?>
-    <div class="wrap">
-        <h1>Reservas</h1>
+    $body = wp_remote_retrieve_body($response);
+    echo '<pre>';
+    echo "📦 Conteúdo da API:\n";
+    var_dump($body); // Mostra o conteúdo bruto
+    echo '</pre>';
 
-        <table class="widefat fixed striped">
-            <thead>
-                <tr>
-                    <th>Apartamento</th>
-                    <th>Nome</th>
-                    <th>Nº Pessoas</th>
-                    <th>Check-In</th>
-                    <th>Check-Out</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if (!empty($dados) && is_array($dados)) {
-                    foreach ($dados as $reserva) {
-                        echo '<tr>';
-                        echo '<td>' . esc_html($reserva['apartment_name'] ?? '-') . '</td>';
-                        echo '<td>' . esc_html($reserva['client_name'] ?? '-') . '</td>';
-                        echo '<td>' . esc_html($reserva['guests'] ?? '-') . '</td>';
-                        echo '<td>' . esc_html($reserva['checkin'] ?? '-') . '</td>';
-                        echo '<td>' . esc_html($reserva['checkout'] ?? '-') . '</td>';
-                        echo '</tr>';
-                    }
-                } else {
-                    echo '<tr><td colspan="5">Nenhuma reserva encontrada ou erro na API.</td></tr>';
-                }
-                ?>
-            </tbody>
-        </table>
-    </div>
-    <?php
+    $dados = json_decode($body, true);
+
+    echo '<pre>';
+    echo "✅ Resultado do json_decode:\n";
+    var_dump($dados); // Mostra como o PHP interpretou os dados
+    echo '</pre>';
 }
+
