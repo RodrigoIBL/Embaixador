@@ -32,25 +32,54 @@ function cmp_reservas_page()
     }
 
     $status_code = wp_remote_retrieve_response_code($response);
-    echo '<p><strong>Status HTTP da resposta:</strong> ' . esc_html($status_code) . '</p>';
-
-    $body = wp_remote_retrieve_body($response);
-
-    // Limpar caracteres inválidos UTF-8
-    $body_clean = iconv('UTF-8', 'UTF-8//IGNORE', $body);
-
-    echo '<p><strong>Conteúdo bruto da resposta da API (limpo):</strong></p>';
-    echo '<pre>' . esc_html($body_clean) . '</pre>';
-
-    $dados = json_decode($body_clean, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        echo '<p><strong>Erro ao decodificar JSON:</strong> ' . esc_html(json_last_error_msg()) . '</p>';
+    if ($status_code !== 200) {
+        echo '<div class="notice notice-error"><p>Status HTTP inesperado: ' . esc_html($status_code) . '</p></div>';
         return;
     }
 
-    echo '<p><strong>Array decodificado do JSON:</strong></p>';
-    echo '<pre>' . print_r($dados, true) . '</pre>';
+    $body = wp_remote_retrieve_body($response);
+    $body_clean = iconv('UTF-8', 'UTF-8//IGNORE', $body);
 
-    // Continua com a exibição da tabela aqui...
+    $dados = json_decode($body_clean, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        echo '<div class="notice notice-error"><p>Erro ao decodificar JSON: ' . esc_html(json_last_error_msg()) . '</p></div>';
+        return;
+    }
+
+    if (empty($dados)) {
+        echo '<p>Nenhuma reserva encontrada.</p>';
+        return;
+    }
+
+    echo '<table class="widefat fixed" cellspacing="0" style="width: 100%; border-collapse: collapse;">';
+    echo '<thead>';
+    echo '<tr>';
+    echo '<th style="border: 1px solid #ddd; padding: 8px;">Nome</th>';
+    echo '<th style="border: 1px solid #ddd; padding: 8px;">Check-In</th>';
+    echo '<th style="border: 1px solid #ddd; padding: 8px;">Check-Out</th>';
+    echo '<th style="border: 1px solid #ddd; padding: 8px;">Provider</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    foreach ($dados as $reserva) {
+        $nome = trim(($reserva['firstname'] ?? '') . ' ' . ($reserva['lastname'] ?? ''));
+        
+        // As datas na API estão em timestamp Unix em string, converter para data legível
+        $checkin = !empty($reserva['in_date']) ? date('Y-m-d', intval($reserva['in_date'])) : '';
+        $checkout = !empty($reserva['out_date']) ? date('Y-m-d', intval($reserva['out_date'])) : '';
+
+        $provider = $reserva['provider'] ?? '';
+
+        echo '<tr>';
+        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($nome) . '</td>';
+        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($checkin) . '</td>';
+        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($checkout) . '</td>';
+        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($provider) . '</td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody>';
+    echo '</table>';
+    echo '</div>';
 }
