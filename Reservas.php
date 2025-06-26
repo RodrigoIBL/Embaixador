@@ -11,14 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly.
 }
 
-function register_calendar_widget( $widgets_manager ) {
+function register_oembed_widget( $widgets_manager ) {
 
-	require_once( __DIR__ . '/widgets/calendar-widget.php' );
+	require_once( __DIR__ . '/widgets/oembed-widget.php' );
 
-	$widgets_manager->register( new \Elementor_calendar_Widget() );
+	$widgets_manager->register( new \Elementor_oEmbed_Widget() );
 
 }
-add_action( 'elementor/widgets/register', 'register_calendar_widget' );
+add_action( 'elementor/widgets/register', 'register_oembed_widget' );
 
 add_action('admin_menu', function () {
     add_menu_page(
@@ -37,7 +37,7 @@ function cmp_reservas_page()
     $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
     $response = wp_remote_get($api_url);
 
-    echo '<div class="wrap"><h1>Reservas 2</h1>';
+    echo '<div class="wrap"><h1>Reservas 3</h1>';
 
     if (is_wp_error($response)) {
         echo '<div class="notice notice-error"><p>Erro ao aceder à API: ' . esc_html($response->get_error_message()) . '</p></div>';
