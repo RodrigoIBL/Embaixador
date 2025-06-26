@@ -20,15 +20,6 @@ function cmp_add_reservas_menu() {
         'dashicons-awards', // Icon URL (Dashicons: https://developer.wordpress.org/resource/dashicons/)
         2                   // Position
     );
-     // Add subpages
-     add_submenu_page(
-        'cmp-winners',          // Parent slug
-        'Ver reservas',           // Page title
-        'Ver reservas',           // Menu title
-        'manage_options',       // Capability
-        'cmp-ver_recompensas',       // Menu slug
-        'cmp_ver_recompensas'   // Function to display the subpage content
-    );
 }
 
 // Hook the function to 'admin_menu' action
@@ -38,16 +29,74 @@ add_action('admin_menu', 'cmp_add_reservas_menu');
 function cmp_reservas_page() {
     ?>
     <h1>teste</h1>
-    <?php
-}
-function cmp_ver_recompensas() {
-    ?>
-    
+    <table>
+  <tr>
+    <th>Apartamento</th>
+    <th>Nome</th>
+    <th>Numero de pessoas</th>
+    <th>Check-In</th>
+    <th>Check-Out</th>
+  </tr>
+  <tr>
+    <td>Alfreds Futterkiste</td>
+    <td>Maria Anders</td>
+    <td>Germany</td>
+  </tr>
+  <tr>
+    <td>Centro comercial Moctezuma</td>
+    <td>Francisco Chang</td>
+    <td>Mexico</td>
+  </tr>
+  <tr>
+    <td>Ernst Handel</td>
+    <td>Roland Mendel</td>
+    <td>Austria</td>
+  </tr>
+  <tr>
+    <td>Island Trading</td>
+    <td>Helen Bennett</td>
+    <td>UK</td>
+  </tr>
+  <tr>
+    <td>Laughing Bacchus Winecellars</td>
+    <td>Yoshi Tannamuri</td>
+    <td>Canada</td>
+  </tr>
+  <tr>
+    <td>Magazzini Alimentari Riuniti</td>
+    <td>Giovanni Rovelli</td>
+    <td>Italy</td>
+  </tr>
+</table>
+
+
     <?php
 }
 
-function cmp_adicionar_progresso() {
-    ?>
-    
-    <?php
+function callAPI() {
+  // Enfileirar o JS
+  wp_enqueue_script('widget-contacto-js');
+
+  // Chamada à API
+  $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
+  $response = wp_remote_get($api_url);
+
+  if (!is_wp_error($response)) {
+      $body = wp_remote_retrieve_body($response);
+      $dados = json_decode($body, true);
+
+      // Passar os dados para o JS
+      wp_add_inline_script('widget-contacto-js', 'window.reservasHostkit = ' . json_encode($dados) . ';', 'before');
+  }
 }
+
+function widget_contacto_enqueue_script() {
+    wp_register_script(
+        'widget-contacto-js',
+        plugins_url('/widget-contacto.js', __FILE__),
+        [],
+        null,
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'widget_contacto_enqueue_script');
