@@ -30,16 +30,33 @@ function cmp_reservas_page()
     }
 
     $body = wp_remote_retrieve_body($response);
-    echo '<pre>';
-    echo "📦 Conteúdo da API:\n";
-    var_dump($body); // Mostra o conteúdo bruto
-    echo '</pre>';
-
     $dados = json_decode($body, true);
 
-    echo '<pre>';
-    echo "✅ Resultado do json_decode:\n";
-    var_dump($dados); // Mostra como o PHP interpretou os dados
-    echo '</pre>';
-}
+    echo '<div class="wrap"><h1>Reservas</h1>';
 
+    if (!empty($dados) && is_array($dados)) {
+        echo '<table class="widefat fixed striped">';
+        echo '<thead><tr><th>Nome</th><th>Check-In</th><th>Check-Out</th><th>Provider</th></tr></thead>';
+        echo '<tbody>';
+
+        foreach ($dados as $reserva) {
+            $nome = esc_html(($reserva['firstname'] ?? '') . ' ' . ($reserva['lastname'] ?? ''));
+            $checkin = !empty($reserva['arrival']) ? date('Y-m-d', $reserva['arrival']) : '-';
+            $checkout = !empty($reserva['departure']) ? date('Y-m-d', $reserva['departure']) : '-';
+            $provider = esc_html($reserva['provider'] ?? '-');
+
+            echo '<tr>';
+            echo '<td>' . $nome . '</td>';
+            echo '<td>' . $checkin . '</td>';
+            echo '<td>' . $checkout . '</td>';
+            echo '<td>' . $provider . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
+    } else {
+        echo '<p>Nenhuma reserva encontrada ou erro no formato dos dados.</p>';
+    }
+
+    echo '</div>';
+}
