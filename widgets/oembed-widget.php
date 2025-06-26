@@ -157,31 +157,47 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 * @access protected
 	 */
 	protected function render(): void {
-    $settings = $this->get_settings_for_display();
-
-    if ( empty( $settings['url'] ) ) {
-        return;
-    }
-
-    // Pega o HTML embebido do URL (se quiser usar)
-    $html = wp_oembed_get( $settings['url'] );
-
-    // Definir mês e ano atuais
-    $month = date('n'); // 1-12
-    $year = date('Y');
-
-    // Primeiro dia do mês
-    $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
-    // Quantidade de dias no mês
-    $daysInMonth = date('t', $firstDayOfMonth);
-    // Dia da semana do primeiro dia do mês (0 = domingo, 6 = sábado)
-    $firstWeekDay = date('w', $firstDayOfMonth);
-
     ?>
     <div class="oembed-elementor-widget">
 
-        <table class="calendar" border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; max-width: 400px; text-align: center;">
-            <caption><?php echo date('F Y', $firstDayOfMonth); ?></caption>
+        <style>
+            .calendar {
+                border-collapse: collapse;
+                width: 100%;
+                max-width: 400px;
+                text-align: center;
+                margin: 10px 0;
+            }
+            .calendar caption {
+                font-weight: bold;
+                font-size: 1.2em;
+                margin-bottom: 10px;
+            }
+            .calendar th, .calendar td {
+                border: 1px solid #ccc;
+                padding: 5px;
+                width: 14.28%; /* 100%/7 dias */
+            }
+            .calendar td.empty {
+                background-color: #f5f5f5;
+            }
+            .calendar-nav {
+                margin-bottom: 5px;
+            }
+            .calendar-nav button {
+                padding: 5px 10px;
+                margin: 0 5px;
+                cursor: pointer;
+            }
+        </style>
+
+        <div class="calendar-nav">
+            <button id="prevMonthBtn">Anterior</button>
+            <button id="nextMonthBtn">Próximo</button>
+        </div>
+
+        <table id="calendarTable" class="calendar" aria-label="Calendário mensal">
+            <caption id="calendarCaption"></caption>
             <thead>
                 <tr>
                     <th>Dom</th>
@@ -193,36 +209,77 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
                     <th>Sáb</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                <?php
-                // Espaços em branco antes do primeiro dia do mês
-                for ($i = 0; $i < $firstWeekDay; $i++) {
-                    echo '<td></td>';
-                }
-
-                $currentDay = 1;
-                // Preenche os dias do mês
-                for ($i = $firstWeekDay; $i < 7; $i++) {
-                    echo '<td>' . $currentDay++ . '</td>';
-                }
-                echo '</tr>';
-
-                // Dias seguintes
-                while ($currentDay <= $daysInMonth) {
-                    echo '<tr>';
-                    for ($i = 0; $i < 7; $i++) {
-                        if ($currentDay <= $daysInMonth) {
-                            echo '<td>' . $currentDay++ . '</td>';
-                        } else {
-                            echo '<td></td>';
-                        }
-                    }
-                    echo '</tr>';
-                }
-                ?>
+            <tbody id="calendarBody">
+                <!-- Dias serão inseridos aqui via JS -->
             </tbody>
         </table>
+
+        <script>
+            (function() {
+                const caption = document.getElementById('calendarCaption');
+                const tbody = document.getElementById('calendarBody');
+                const prevBtn = document.getElementById('prevMonthBtn');
+                const nextBtn = document.getElementById('nextMonthBtn');
+
+                let currentDate = new Date();
+
+                function renderCalendar(date) {
+                    const year = date.getFullYear();
+                    const month = date.getMonth();
+
+                    // Primeiro dia do mês
+                    const firstDay = new Date(year, month, 1);
+                    const firstWeekDay = firstDay.getDay(); // 0=dom, 6=sab
+                    // Quantidade de dias no mês
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                    caption.textContent = date.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+
+                    tbody.innerHTML = '';
+
+                    let row = document.createElement('tr');
+
+                    // Espaços em branco antes do primeiro dia
+                    for (let i = 0; i < firstWeekDay; i++) {
+                        const cell = document.createElement('td');
+                        cell.classList.add('empty');
+                        row.appendChild(cell);
+                    }
+
+                    // Dias do mês
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        if ((row.children.length) === 7) {
+                            tbody.appendChild(row);
+                            row = document.createElement('tr');
+                        }
+
+                        const cell = document.createElement('td');
+                        cell.textContent = day;
+                        row.appendChild(cell);
+                    }
+
+                    // Preencher a última linha com espaços se necessário
+                    while (row.children.length < 7) {
+                        const cell = document.createElement('td');
+                        cell.classList.add('empty');
+                        row.appendChild(cell);
+                    }
+                    tbody.appendChild(row);
+                }
+
+                prevBtn.addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    renderCalendar(currentDate);
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    renderCalendar(currentDate);
+                });
+
+                renderCalendar(currentDate);
+            })();
+        </script>
 
     </div>
     <?php
