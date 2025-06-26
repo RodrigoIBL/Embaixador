@@ -1,102 +1,83 @@
 <?php
 /**
  * Plugin Name: Reservas
- * Description: Plugin de reservas embaixador
+ * Description: Plugin de reservas Embaixador
  * Author: IBloom
- * Author URI: https://www.ibloom.digital/pt/agencia-digital-lisboa/
  * Version: 0.1
- * Text Domain: Reservas
- * 
+ * Text Domain: reservas
  */
 
- // Function to add the "Reservas" menu item
-function cmp_add_reservas_menu() {
+// Cria o menu no admin
+add_action('admin_menu', function () {
     add_menu_page(
-        'Reservas',          // Page title
-        'Reservas',          // Menu title
-        'manage_options',   // Capability
-        'cmp-reservas',      // Menu slug
-        'cmp_reservas_page', // Function to display the page content
-        'dashicons-awards', // Icon URL (Dashicons: https://developer.wordpress.org/resource/dashicons/)
-        2                   // Position
+        'Reservas',
+        'Reservas',
+        'manage_options',
+        'cmp-reservas',
+        'cmp_reservas_page',
+        'dashicons-calendar-alt',
+        2
     );
-}
+});
 
-// Hook the function to 'admin_menu' action
-add_action('admin_menu', 'cmp_add_reservas_menu');
-
-// Function to display the "Winners" page content
-function cmp_reservas_page() {
+// Página do admin
+function cmp_reservas_page()
+{
     ?>
-    <h1>Reservas</h1>
-    <table>
-  <tr>
-    <th>Apartamento</th>
-    <th>Nome</th>
-    <th>Numero de pessoas</th>
-    <th>Check-In</th>
-    <th>Check-Out</th>
-  </tr>
-  <tr>
-    <td>Alfreds Futterkiste</td>
-    <td>Maria Anders</td>
-    <td>Germany</td>
-  </tr>
-  <tr>
-    <td>Centro comercial Moctezuma</td>
-    <td>Francisco Chang</td>
-    <td>Mexico</td>
-  </tr>
-  <tr>
-    <td>Ernst Handel</td>
-    <td>Roland Mendel</td>
-    <td>Austria</td>
-  </tr>
-  <tr>
-    <td>Island Trading</td>
-    <td>Helen Bennett</td>
-    <td>UK</td>
-  </tr>
-  <tr>
-    <td>Laughing Bacchus Winecellars</td>
-    <td>Yoshi Tannamuri</td>
-    <td>Canada</td>
-  </tr>
-  <tr>
-    <td>Magazzini Alimentari Riuniti</td>
-    <td>Giovanni Rovelli</td>
-    <td>Italy</td>
-  </tr>
-</table>
+    <div class="wrap">
+        <h1>Reservas</h1>
 
-<button onclick="callAPI()">Teste</button>
+        <table class="widefat fixed">
+            <thead>
+                <tr>
+                    <th>Apartamento</th>
+                    <th>Nome</th>
+                    <th>Número de pessoas</th>
+                    <th>Check-In</th>
+                    <th>Check-Out</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="5">Exemplo estático (podes substituir depois pelos dados da API)</td></tr>
+            </tbody>
+        </table>
+
+        <br>
+        <button class="button button-primary" onclick="callAPI()">Teste</button>
+    </div>
     <?php
 }
 
-function callAPI() {
-  // Enfileirar o JS
-  wp_enqueue_script('widget-contacto-js');
+// Carrega JS no admin
+add_action('admin_enqueue_scripts', function ($hook) {
+    if ($hook !== 'toplevel_page_cmp-reservas') return;
 
-  // Chamada à API
-  $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
-  $response = wp_remote_get($api_url);
-
-  if (!is_wp_error($response)) {
-      $body = wp_remote_retrieve_body($response);
-      $dados = json_decode($body, true);
-
-      // Passar os dados para o JS
-      wp_add_inline_script('widget-contacto-js', 'window.reservasHostkit = ' . json_encode($dados) . ';', 'before');
-  }
-}
-
-function widget_contacto_enqueue_script() {
-    wp_register_script(
-        'widget-contacto-js',
-        plugins_url('/widget-contacto.js', __FILE__),
-        [],
+    wp_enqueue_script(
+        'reservas-api-script',
+        plugin_dir_url(__FILE__) . 'reservas.js',
+        ['jquery'],
         null,
         true
     );
-}
-add_action('wp_enqueue_scripts', 'widget_contacto_enqueue_script');
+
+    wp_localize_script('reservas-api-script', 'reservasAjax', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('reservas_nonce')
+    ]);
+});
+
+// AJAX handler
+add_action('wp_ajax_reservas_call_api', function () {
+    check_ajax_referer('reservas_nonce', 'nonce');
+
+    $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
+    $response = wp_remote_get($api_url);
+
+    if (is_wp_error($response)) {
+        wp_send_json_error(['message' => $response->get_error_message()]);
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $dados = json_decode($body, true);
+    wp_send_json_success($dados);
+});
