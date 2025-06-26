@@ -166,11 +166,7 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 		$html = wp_oembed_get( $settings['url'] );
 		?>
 		<div class="oembed-elementor-widget">
-			# Embaixador
-
-function cmp_reservas_page()
-{
-    $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
+			    $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
     $response = wp_remote_get($api_url);
 
     echo '<div class="wrap"><h1>Reservas</h1>';
@@ -339,9 +335,7 @@ function cmp_reservas_page()
     </script>
 
     <?php
-    echo '</div>';
-}?>
-
+    echo '</div>';?>
 			<?php echo ( $html ) ? $html : $settings['url']; ?>
 		</div>
 		<?php
