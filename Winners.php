@@ -60,3 +60,7 @@ function cmp_reservas_page()
 
     echo '</div>';
 }
+
+echo '<pre>';
+print_r($dados);
+echo '</pre>';
