@@ -158,46 +158,13 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
 	 */
 	protected function render(): void {
     ?>
-    <div class="oembed-elementor-widget">
-
-        <style>
-            .calendar {
-                border-collapse: collapse;
-                width: 100%;
-                max-width: 400px;
-                text-align: center;
-                margin: 10px 0;
-            }
-            .calendar caption {
-                font-weight: bold;
-                font-size: 1.2em;
-                margin-bottom: 10px;
-            }
-            .calendar th, .calendar td {
-                border: 1px solid #ccc;
-                padding: 5px;
-                width: 14.28%; /* 100%/7 dias */
-            }
-            .calendar td.empty {
-                background-color: #f5f5f5;
-            }
-            .calendar-nav {
-                margin-bottom: 5px;
-            }
-            .calendar-nav button {
-                padding: 5px 10px;
-                margin: 0 5px;
-                cursor: pointer;
-            }
-        </style>
-
-        <div class="calendar-nav">
-            <button id="prevMonthBtn">Anterior</button>
-            <button id="nextMonthBtn">Próximo</button>
+    <div id="reservas-calendar-container" style="max-width: 400px; margin: 20px auto; font-family: Arial, sans-serif;">
+        <div style="text-align: center; margin-bottom: 10px;">
+            <button id="prev-month" style="margin-right: 10px;">&lt; Mês Anterior</button>
+            <span id="month-year" style="font-weight: bold;"></span>
+            <button id="next-month" style="margin-left: 10px;">Mês Seguinte &gt;</button>
         </div>
-
-        <table id="calendarTable" class="calendar" aria-label="Calendário mensal">
-            <caption id="calendarCaption"></caption>
+        <table id="reservas-calendar" border="1" cellspacing="0" cellpadding="5" style="width: 100%; border-collapse: collapse; text-align: center;">
             <thead>
                 <tr>
                     <th>Dom</th>
@@ -209,79 +176,134 @@ class Elementor_oEmbed_Widget extends \Elementor\Widget_Base {
                     <th>Sáb</th>
                 </tr>
             </thead>
-            <tbody id="calendarBody">
-                <!-- Dias serão inseridos aqui via JS -->
-            </tbody>
+            <tbody id="calendar-body"></tbody>
         </table>
+        <p id="calendar-loading" style="text-align:center; display:none;">A carregar reservas...</p>
+        <p id="calendar-error" style="color:red; text-align:center; display:none;"></p>
+    </div>
 
-        <script>
-            (function() {
-                const caption = document.getElementById('calendarCaption');
-                const tbody = document.getElementById('calendarBody');
-                const prevBtn = document.getElementById('prevMonthBtn');
-                const nextBtn = document.getElementById('nextMonthBtn');
+    <script>
+    (function(){
+        const calendarBody = document.getElementById('calendar-body');
+        const monthYearLabel = document.getElementById('month-year');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const loadingText = document.getElementById('calendar-loading');
+        const errorText = document.getElementById('calendar-error');
 
-                let currentDate = new Date();
+        // Estado do mês/ano atual exibido
+        let currentYear, currentMonth;
 
-                function renderCalendar(date) {
-                    const year = date.getFullYear();
-                    const month = date.getMonth();
+        // Datas riscadas vindas da API (YYYY-MM-DD)
+        let blockedDates = [];
 
-                    // Primeiro dia do mês
-                    const firstDay = new Date(year, month, 1);
-                    const firstWeekDay = firstDay.getDay(); // 0=dom, 6=sab
-                    // Quantidade de dias no mês
-                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+        // Formatar mês por extenso (pt-PT)
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-                    caption.textContent = date.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+        // Inicializa o calendário no mês atual
+        function initCalendar() {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth();
+            fetchBlockedDatesAndRender();
+        }
 
-                    tbody.innerHTML = '';
+        // Buscar as datas riscadas via AJAX
+        function fetchBlockedDatesAndRender() {
+            loadingText.style.display = 'block';
+            errorText.style.display = 'none';
+            calendarBody.innerHTML = '';
 
-                    let row = document.createElement('tr');
+            const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
 
-                    // Espaços em branco antes do primeiro dia
-                    for (let i = 0; i < firstWeekDay; i++) {
-                        const cell = document.createElement('td');
-                        cell.classList.add('empty');
-                        row.appendChild(cell);
-                    }
+            fetch(`${ajaxUrl}?action=get_reservas_calendar`)
+            .then(response => response.json())
+            .then(data => {
+                loadingText.style.display = 'none';
 
-                    // Dias do mês
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        if ((row.children.length) === 7) {
-                            tbody.appendChild(row);
-                            row = document.createElement('tr');
-                        }
+                if (data.success) {
+                    blockedDates = data.data;
+                    renderCalendar(currentYear, currentMonth);
+                } else {
+                    errorText.textContent = data.data || 'Erro ao carregar reservas.';
+                    errorText.style.display = 'block';
+                }
+            })
+            .catch(() => {
+                loadingText.style.display = 'none';
+                errorText.textContent = 'Erro na requisição AJAX.';
+                errorText.style.display = 'block';
+            });
+        }
 
-                        const cell = document.createElement('td');
-                        cell.textContent = day;
-                        row.appendChild(cell);
-                    }
+        // Renderiza o calendário para o mês e ano dados
+        function renderCalendar(year, month) {
+            monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+            calendarBody.innerHTML = '';
 
-                    // Preencher a última linha com espaços se necessário
-                    while (row.children.length < 7) {
-                        const cell = document.createElement('td');
-                        cell.classList.add('empty');
-                        row.appendChild(cell);
-                    }
-                    tbody.appendChild(row);
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay(); // 0=Dom, 1=Seg ...
+
+            let row = document.createElement('tr');
+            // Espaços vazios antes do primeiro dia
+            for(let i = 0; i < startDayOfWeek; i++) {
+                let emptyCell = document.createElement('td');
+                emptyCell.innerHTML = '&nbsp;';
+                row.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                if ((startDayOfWeek + day - 1) % 7 === 0 && day !== 1) {
+                    calendarBody.appendChild(row);
+                    row = document.createElement('tr');
                 }
 
-                prevBtn.addEventListener('click', () => {
-                    currentDate.setMonth(currentDate.getMonth() - 1);
-                    renderCalendar(currentDate);
-                });
+                const cell = document.createElement('td');
+                cell.textContent = day;
 
-                nextBtn.addEventListener('click', () => {
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                    renderCalendar(currentDate);
-                });
+                const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                if (blockedDates.includes(dateStr)) {
+                    cell.style.textDecoration = 'line-through';
+                    cell.style.color = '#d00';
+                    cell.title = 'Data reservada';
+                }
 
-                renderCalendar(currentDate);
-            })();
-        </script>
+                row.appendChild(cell);
+            }
 
-    </div>
+            // Completar a última linha com células vazias para o resto da semana
+            while (row.children.length < 7) {
+                let emptyCell = document.createElement('td');
+                emptyCell.innerHTML = '&nbsp;';
+                row.appendChild(emptyCell);
+            }
+            calendarBody.appendChild(row);
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        initCalendar();
+    })();
+    </script>
     <?php
 }
 

@@ -106,3 +106,57 @@ function cmp_reservas_page()
 
     echo '</div>';
 }
+
+<?php
+// ... teu código atual ...
+
+// Endpoint AJAX para retornar as datas das reservas no formato JSON
+add_action('wp_ajax_get_reservas_calendar', 'get_reservas_calendar_callback');
+add_action('wp_ajax_nopriv_get_reservas_calendar', 'get_reservas_calendar_callback');
+
+function get_reservas_calendar_callback() {
+    // URL da API
+    $api_url = 'https://app.hostkit.pt/api/getReservations?APIKEY=5aQElqgU34RIgKDsKxIfuqzjVFR7eH8XxUgZ1StjpcD3rTrJRI';
+    $response = wp_remote_get($api_url);
+
+    if (is_wp_error($response)) {
+        wp_send_json_error('Erro ao aceder à API: ' . $response->get_error_message());
+    }
+
+    $status_code = wp_remote_retrieve_response_code($response);
+    if ($status_code !== 200) {
+        wp_send_json_error('Status HTTP inesperado: ' . $status_code);
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $body_clean = iconv('UTF-8', 'UTF-8//IGNORE', $body);
+    $dados = json_decode($body_clean, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        wp_send_json_error('Erro ao decodificar JSON: ' . json_last_error_msg());
+    }
+
+    if (empty($dados)) {
+        wp_send_json_error('Nenhuma reserva encontrada.');
+    }
+
+    // Extrair todas as datas entre check-in e check-out para riscar no calendário
+    $datas_riscadas = [];
+
+    foreach ($dados as $reserva) {
+        $checkinUnix = !empty($reserva['in_date']) ? intval($reserva['in_date']) : 0;
+        $checkoutUnix = !empty($reserva['out_date']) ? intval($reserva['out_date']) : 0;
+
+        if ($checkinUnix && $checkoutUnix && $checkoutUnix >= $checkinUnix) {
+            for ($ts = $checkinUnix; $ts <= $checkoutUnix; $ts += 86400) {
+                $datas_riscadas[] = date('Y-m-d', $ts);
+            }
+        }
+    }
+
+    // Remover duplicados e ordenar
+    $datas_riscadas = array_values(array_unique($datas_riscadas));
+    sort($datas_riscadas);
+
+    wp_send_json_success($datas_riscadas);
+}
