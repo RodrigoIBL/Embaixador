@@ -3,7 +3,7 @@
  * Plugin Name: Reservas
  * Description: Plugin de reservas Embaixador
  * Author: IBloom
- * Version: 0.2
+ * Version: 0.3
  * Text Domain: reservas
  */
 
@@ -28,12 +28,14 @@ function cmp_reservas_page()
 
     if (is_wp_error($response)) {
         echo '<div class="notice notice-error"><p>Erro ao aceder à API: ' . esc_html($response->get_error_message()) . '</p></div>';
+        echo '</div>';
         return;
     }
 
     $status_code = wp_remote_retrieve_response_code($response);
     if ($status_code !== 200) {
         echo '<div class="notice notice-error"><p>Status HTTP inesperado: ' . esc_html($status_code) . '</p></div>';
+        echo '</div>';
         return;
     }
 
@@ -43,18 +45,20 @@ function cmp_reservas_page()
     $dados = json_decode($body_clean, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         echo '<div class="notice notice-error"><p>Erro ao decodificar JSON: ' . esc_html(json_last_error_msg()) . '</p></div>';
+        echo '</div>';
         return;
     }
 
     if (empty($dados)) {
         echo '<p>Nenhuma reserva encontrada.</p>';
+        echo '</div>';
         return;
     }
 
     // Ordenar as reservas por in_date (check-in) crescente
-    usort($dados, function($a, $b) {
-        $inA = isset($a['in_date']) ? intval($a['in_date']) : 0;
-        $inB = isset($b['in_date']) ? intval($b['in_date']) : 0;
+    usort($dados, function ($a, $b) {
+        $inA = isset($a['in_date']) && is_numeric($a['in_date']) ? intval($a['in_date']) : 0;
+        $inB = isset($b['in_date']) && is_numeric($b['in_date']) ? intval($b['in_date']) : 0;
         return $inA <=> $inB;
     });
 
@@ -70,15 +74,18 @@ function cmp_reservas_page()
     echo '<tbody>';
 
     foreach ($dados as $reserva) {
-        $nome = trim(($reserva['firstname'] ?? '') . ' ' . ($reserva['lastname'] ?? ''));
+        $nome = trim(
+            (isset($reserva['firstname']) ? $reserva['firstname'] : '') . ' ' .
+            (isset($reserva['lastname']) ? $reserva['lastname'] : '')
+        );
 
-        $checkinUnix = !empty($reserva['in_date']) ? intval($reserva['in_date']) : 0;
-        $checkoutUnix = !empty($reserva['out_date']) ? intval($reserva['out_date']) : 0;
+        $checkinUnix = (isset($reserva['in_date']) && is_numeric($reserva['in_date'])) ? intval($reserva['in_date']) : 0;
+        $checkoutUnix = (isset($reserva['out_date']) && is_numeric($reserva['out_date'])) ? intval($reserva['out_date']) : 0;
 
         $checkin = $checkinUnix ? date('Y-m-d', $checkinUnix) : '';
         $checkout = $checkoutUnix ? date('Y-m-d', $checkoutUnix) : '';
 
-        $provider = $reserva['provider'] ?? '';
+        $provider = isset($reserva['provider']) ? $reserva['provider'] : '';
 
         echo '<tr>';
         echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($nome) . '</td>';
@@ -90,6 +97,5 @@ function cmp_reservas_page()
 
     echo '</tbody>';
     echo '</table>';
-
     echo '</div>';
 }
