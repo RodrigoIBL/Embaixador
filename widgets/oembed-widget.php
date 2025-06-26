@@ -340,7 +340,7 @@ function cmp_reservas_page()
 
     <?php
     echo '</div>';
-}
+}?>
 
 			<?php echo ( $html ) ? $html : $settings['url']; ?>
 		</div>
